@@ -9,15 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-
 
 import com.andrii.demo.entity.Category;
 import com.andrii.demo.entity.Item;
 import com.andrii.demo.repository.ItemRepository;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ItemServiceTest {
@@ -45,7 +45,6 @@ public class ItemServiceTest {
 		items=items.stream().filter(item->item.getId()==id).collect(Collectors.toList());
 		
 		filteredItems=Optional.of(items.get(0));
-		System.out.println(filteredItems);
 		given(itemService.retrieveItemById(id)).willReturn(filteredItems);
 		
 		Optional<Item> item = itemService.retrieveItemById(id);
@@ -63,6 +62,34 @@ public class ItemServiceTest {
 		
 		assertThat(resultListItems).isNotEmpty();
 	} 
+	
+	@Test
+	void shouldReturnAllAvailableItemsWhereAvailabilityIsMoreThanZero() {
+		List<Item> availableItems= listItems().stream().filter(item->item.getAvailability()>0).collect(Collectors.toList());
+		given(itemService.retrieveAllAvailableItems()).willReturn(availableItems);
+		
+		List<Item> items = itemService.retrieveAllAvailableItems();
+		
+		assertThat(items).hasSize(4);
+	}
+	
+	@Test
+	void shouldSaveUserSuccessfully() {
+		when(itemService.saveItem(Mockito.any(Item.class)))
+        .thenAnswer(i -> i.getArguments()[0]);
+		Item item = new Item(6l, "chocolate", 0, 12.70,Category.FOOD);
+		
+		assertThat(itemService.saveItem(item)).isInstanceOf(Item.class);
+		
+	}
+	
+	@Test
+	void shouldDeleteItemById() {
+		itemService.deleteITemById(1l);
+		verify(itemRepository, atLeastOnce()).deleteById(1l);
+		verify(itemRepository, never()).deleteById(5L);
+	}
+	
 	public List<Item> listItems(){
 		ArrayList<Item> items = new ArrayList<>();
 		items.add(new Item(5l, "bread", 6, 12.70,Category.FOOD));

@@ -29,4 +29,16 @@ public class ItemService {
 	public List<Item> retrieveItemByCategory(Category category){
 		return itemRepository.findItemsByCategory(category);
 	}
+	
+	public List<Item> retrieveAllAvailableItems(){
+		return itemRepository.findAvailableItems();
+	}
+	
+	public Item saveItem(Item item){
+		return itemRepository.save(item);
+	}
+	
+	public void deleteITemById(long id) {
+		itemRepository.deleteById(id);
+	}
 }

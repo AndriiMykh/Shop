@@ -12,4 +12,6 @@ import com.andrii.demo.entity.Item;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 	@Query("SELECT u FROM Item u WHERE u.category = :category")
 	List<Item> findItemsByCategory(@Param("category") Category category);
+	@Query("SELECT u FROM Item u WHERE u.availability>0")
+	List<Item>findAvailableItems();
 }
