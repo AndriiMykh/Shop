@@ -27,6 +27,7 @@ public class ItemServiceTest {
 	
 	@InjectMocks
 	private ItemService itemService;
+	
 	@Test
 	void shouldRetrieveAllItems() {
 		given(itemService.retrieveAllItems()).willReturn(listItems());
@@ -74,7 +75,7 @@ public class ItemServiceTest {
 	}
 	
 	@Test
-	void shouldSaveUserSuccessfully() {
+	void shouldSaveItemSuccessfully() {
 		when(itemService.saveItem(Mockito.any(Item.class)))
         .thenAnswer(i -> i.getArguments()[0]);
 		Item item = new Item(6l, "chocolate", 0, 12.70,Category.FOOD);
