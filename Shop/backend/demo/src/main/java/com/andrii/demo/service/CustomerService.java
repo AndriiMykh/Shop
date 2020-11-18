@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.andrii.demo.entity.Customer;
+import com.andrii.demo.exception.DataNotFoundException;
 import com.andrii.demo.exception.TheEmailAlreadyExistsException;
 import com.andrii.demo.repository.CustomerRepository;
 
@@ -35,5 +36,11 @@ public class CustomerService {
 	}
 	
 	
+	public Customer findByEmailAndPassword(String email, String password) {
+		return customerRepository.findByEmailAndPassword(email, password);
+	}
 	
+	public void deleteById(long id) {
+		 customerRepository.deleteById(id);
+	}
 }

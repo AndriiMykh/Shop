@@ -11,4 +11,6 @@ import com.andrii.demo.entity.Customer;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 	@Query("SELECT u FROM Customer u WHERE u.email = :email")
 	Optional<Customer> findByEmail(@Param("email")String email);
+	@Query("SELECT u FROM Customer WHERE u.email=:email and u.password")
+	Customer findByEmailAndPassword(@Param("email") String email, @Param("password") String password);
 }

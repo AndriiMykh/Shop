@@ -19,6 +19,7 @@ import com.andrii.demo.entity.Customer;
 import com.andrii.demo.exception.TheEmailAlreadyExistsException;
 import com.andrii.demo.repository.CustomerRepository;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,8 +77,29 @@ public class CustomerServiceTest {
 		
 	}
 	
+	@Test
+	void shouldFindByEmailAndPassword() {
+		String email="380679724615@mail.ru";
+		String password = "1234";
+		Customer foundCustomer=customerList().stream().filter(customer->customer.getEmail().equals(email)
+				&&customer.getPassword().equals(password)).collect(toSingleton());
+		given(customerService.findByEmailAndPassword(email,password)).willReturn(foundCustomer);
+
+		Customer getCustomer=customerService.findByEmailAndPassword(email, password);
+		
+		assertThat(getCustomer).isNotNull();
+		
+	}
 	
-	
+	@Test
+	void shouldDeleteCustomerById() {
+		customerService.deleteById(1l);
+		customerService.deleteById(2l);
+		customerService.deleteById(3l);
+		verify(customerRepository, times(3)).deleteById(Mockito.anyLong());
+		verify(customerRepository, never()).deleteById(5l);
+		
+	}
 	
 	public List<Customer> customerList(){
 		List<Customer> customerlist= new ArrayList<Customer>();
