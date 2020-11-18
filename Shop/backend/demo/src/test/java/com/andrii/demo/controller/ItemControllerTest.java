@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.andrii.demo.entity.Category;
 import com.andrii.demo.entity.Item;
+import com.andrii.demo.exception.DataNotFoundException;
 import com.andrii.demo.service.CustomerServiceTest;
 import com.andrii.demo.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,13 +79,23 @@ class ItemControllerTest {
     }
     
     @Test
+    void shouldThrowDataNotFoundException() throws Exception {
+    	final long itemId = 200l;
+    	given(itemService.retrieveItemById(itemId)).willThrow(DataNotFoundException.class);
+    	
+    	this.mockMvc.perform(get("/api/items/{id}",itemId))
+    		.andExpect(status().isNotFound())
+    		.andExpect(result->assertThat(result.getResponse().getContentAsString().contains("Data not found")).isTrue());
+    }
+    
+    @Test
     public void givenBadArgumentsWhenExpectedId() throws Exception {
     	String exceptionParam = "bad_arguments";
     	
     	this.mockMvc.perform(get("/api/items/{id}",exceptionParam)
     			.contentType(MediaType.APPLICATION_JSON))
     			.andExpect(status().isBadRequest())
-    			.andExpect(result->assertThat(result.getResolvedException().getMessage().contains("Bad arguments")));
+    			.andExpect(result->assertThat(result.getResponse().getContentAsString().contains("Bad arguments")).isTrue());
     }
     
     

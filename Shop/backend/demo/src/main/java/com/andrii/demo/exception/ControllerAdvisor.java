@@ -14,11 +14,19 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ControllerAdvisor extends ResponseEntityExceptionHandler{
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
-	public ResponseEntity<Object> handleBookAlreadyExistsException(MethodArgumentTypeMismatchException ex){
+	public ResponseEntity<Object> handleBadRequestException(MethodArgumentTypeMismatchException ex){
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDate.now());
         body.put("message", "Bad arguments");
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(DataNotFoundException.class)
+	public ResponseEntity<Object> handleBookAlreadyExistsException(DataNotFoundException ex){
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDate.now());
+        body.put("message", "Data not found");
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
 	}
 }

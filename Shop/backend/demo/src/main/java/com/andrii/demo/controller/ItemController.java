@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.andrii.demo.entity.Item;
+import com.andrii.demo.exception.DataNotFoundException;
 import com.andrii.demo.service.ItemService;
 
 @RestController
@@ -30,11 +31,16 @@ public class ItemController {
 		return itemService.retrieveAllItems();
 	}
 	
+//	@GetMapping("/{id}")
+//	private Optional<Item> getItemById(@PathVariable("id") long id) {
+//		return itemService.retrieveItemById(id);
+//	}
 	@GetMapping("/{id}")
-	private Optional<Item> getItemById(@PathVariable("id") long id) {
-		
-		return itemService.retrieveItemById(id);
-		
+	private Item getItemById(@PathVariable("id") long id) {
+		Optional<Item> item = itemService.retrieveItemById(id);
+		if(item.isEmpty())
+			throw new DataNotFoundException("Such a user was'nt found");
+		else
+			return item.get();
 	}
-	
 }
