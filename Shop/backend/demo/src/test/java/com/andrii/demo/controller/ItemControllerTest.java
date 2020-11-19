@@ -23,6 +23,7 @@ import com.andrii.demo.entity.Item;
 import com.andrii.demo.exception.DataNotFoundException;
 import com.andrii.demo.service.CustomerServiceTest;
 import com.andrii.demo.service.ItemService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -140,6 +141,61 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.availability", is(item.getAvailability())))
                 .andExpect(jsonPath("$.price", is(item.getPrice())))
                 .andExpect(jsonPath("$.category", is(item.getCategory().toString())));
+    }
+    
+    @Test
+    public void shouldUpdateUser() throws JsonProcessingException, Exception {
+    	long itemId=1l;
+    	Item item = new Item(itemId,"White wine", 4, 13.65, Category.BEVERAGE);
+    	given(itemService.retrieveItemById(itemId)).willReturn(Optional.of(item));
+    	given(itemService.saveItem(any(Item.class))).willAnswer((invocation) -> invocation.getArgument(0));
+    	
+    	this.mockMvc.perform(put(startUrl+"{id}",item.getId())
+        .contentType(json)
+        .content(objectMapper.writeValueAsString(item)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name", is(item.getName())))
+        .andExpect(jsonPath("$.availability", is(item.getAvailability())))
+        .andExpect(jsonPath("$.price", is(item.getPrice())))
+        .andExpect(jsonPath("$.category", is(item.getCategory().toString())));
+    }			
+    
+    @Test 
+    public void shouldReturn404WhenUpdatingNotExistingItem() throws Exception {
+    	long id =32l;
+    	Item item = new Item(id,"White wine", 4, 13.65, Category.BEVERAGE);
+    	given(itemService.retrieveItemById(id)).willReturn(Optional.empty());
+    	this.mockMvc.perform(put(startUrl+"{id}",id)
+    			.contentType(json)
+    			.content(objectMapper.writeValueAsString(item)))
+    			.andExpect(status().isNotFound())
+    			;
+    }
+    
+    @Test
+    public void shouldDeleteUserById() throws Exception {
+    	long id =32l;
+    	Item item = new Item(id,"White wine", 4, 13.65, Category.BEVERAGE);
+    	given(itemService.retrieveItemById(id)).willReturn(Optional.of(item));
+    	doNothing().when(itemService).deleteITemById(item.getId());
+    	
+    	this.mockMvc.perform(delete(startUrl+"{id}",item.getId()))
+    		.andExpect(status().isOk())
+            .andExpect(jsonPath("$.name", is(item.getName())))
+            .andExpect(jsonPath("$.availability", is(item.getAvailability())))
+            .andExpect(jsonPath("$.price", is(item.getPrice())))
+            .andExpect(jsonPath("$.category", is(item.getCategory().toString())));
+    }
+    
+    @Test
+    public void shouldReturn404WhenDeletingUnexistingItem() throws Exception {
+    	
+    	long id=32l;
+		given(itemService.retrieveItemById(id)).willReturn(Optional.empty());
+		
+		this.mockMvc.perform(delete(startUrl+"{id}",id))
+				.andExpect(status().isNotFound());
+		
     }
     
 }
