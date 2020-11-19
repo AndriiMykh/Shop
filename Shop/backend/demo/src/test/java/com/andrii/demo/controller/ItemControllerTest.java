@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.andrii.demo.entity.Category;
 import com.andrii.demo.entity.Item;
@@ -45,8 +47,8 @@ class ItemControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     private List<Item> itemList;
-
-    
+    MediaType json;
+    String startUrl;
     @BeforeEach
     void setUp() {
     	this.itemList=new ArrayList<Item>();
@@ -55,13 +57,15 @@ class ItemControllerTest {
     	this.itemList.add(new Item(7l, "Air Wick Electrical", 8, 12.70,Category.CHEMICALS));
     	this.itemList.add(new Item(10l, "When Breath Becomes Air", 3, 12.70,Category.BOOKS));
     	this.itemList.add(new Item(15l, "red wine", 1, 12.70,Category.BEVERAGE));
+    	json=MediaType.APPLICATION_JSON;
+    	startUrl="/api/items/";
     }
     
     @Test
     void shouldReturnAllItemsOnGetRequest() throws Exception {
     	given(itemService.retrieveAllItems()).willReturn(itemList);
     	
-    	this.mockMvc.perform(get("/api/items/"))
+    	this.mockMvc.perform(get(startUrl))
     		.andExpect(status().isOk())
     		.andExpect(jsonPath("$.size()", is(itemList.size())));
     }
@@ -72,7 +76,7 @@ class ItemControllerTest {
     	Item item = itemList.stream().filter(itemInside->itemInside.getId()==itemId).collect(CustomerServiceTest.toSingleton());
     	given(itemService.retrieveItemById(itemId)).willReturn(Optional.of(item));
     	
-    	this.mockMvc.perform(get("/api/items/{id}",itemId))
+    	this.mockMvc.perform(get(startUrl+"{id}",itemId))
     		.andExpect(status().isOk())
     		.andExpect(jsonPath("$.name", is(item.getName())))
     		.andExpect(jsonPath("$.category", is(item.getCategory().toString())));
@@ -83,7 +87,7 @@ class ItemControllerTest {
     	final long itemId = 200l;
     	given(itemService.retrieveItemById(itemId)).willThrow(DataNotFoundException.class);
     	
-    	this.mockMvc.perform(get("/api/items/{id}",itemId))
+    	this.mockMvc.perform(get(startUrl+"{id}",itemId))
     		.andExpect(status().isNotFound())
     		.andExpect(result->assertThat(result.getResponse().getContentAsString().contains("Data not found")).isTrue());
     }
@@ -92,11 +96,50 @@ class ItemControllerTest {
     public void givenBadArgumentsWhenExpectedId() throws Exception {
     	String exceptionParam = "bad_arguments";
     	
-    	this.mockMvc.perform(get("/api/items/{id}",exceptionParam)
-    			.contentType(MediaType.APPLICATION_JSON))
+    	this.mockMvc.perform(get(startUrl+"{id}",exceptionParam)
+    			.contentType(json))
     			.andExpect(status().isBadRequest())
     			.andExpect(result->assertThat(result.getResponse().getContentAsString().contains("Bad arguments")).isTrue());
     }
     
+    @Test
+    public void shouldReturnItemsListByCategory() throws Exception {
+    	String category="food";
+    	List<Item> filteredItemsByCategory =this.itemList.stream()
+    			.filter(item->item.getCategory().toString().equals(category.toUpperCase())).collect(Collectors.toList());
+    	given(itemService.retrieveItemByCategory(Category.valueOf(category.toUpperCase()))).willReturn(filteredItemsByCategory);
+    	
+    	this.mockMvc.perform(get(startUrl+"categories/{category}",category)
+    			.contentType(json))
+    			.andExpect(status().isOk())
+    			.andExpect(jsonPath("$.size()", is(filteredItemsByCategory.size())));
+    }
+    
+    @Test
+    public void shouldReturnAllAvailableItems() throws Exception {
+    	List<Item> filteredItemsByCategory =this.itemList.stream().filter(item->item.getAvailability()>0).collect(Collectors.toList());
+    	given(itemService.retrieveAllAvailableItems()).willReturn(filteredItemsByCategory);
+    	
+    	this.mockMvc.perform(get(startUrl+"available")
+    			.contentType(json))
+    			.andExpect(status().isOk())
+    			.andExpect(jsonPath("$.size()",is(filteredItemsByCategory.size())));
+    }
+    
+    @Test
+    public void shouldCreateNewItem() throws Exception {
+    	given(itemService.saveItem(any(Item.class))).willAnswer(invocation->invocation.getArgument(0));
+    	
+    	Item item = new Item("White wine", 4, 13.65, Category.BEVERAGE);
+    	
+        this.mockMvc.perform(post(startUrl)
+                .contentType(json)
+                .content(objectMapper.writeValueAsString(item)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name", is(item.getName())))
+                .andExpect(jsonPath("$.availability", is(item.getAvailability())))
+                .andExpect(jsonPath("$.price", is(item.getPrice())))
+                .andExpect(jsonPath("$.category", is(item.getCategory().toString())));
+    }
     
 }
